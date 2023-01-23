@@ -1,0 +1,120 @@
+<html>
+<head>
+  <script src="https://unpkg.com/realm-web/dist/bundle.iife.js"></script>
+  <script>
+            const config = {
+                id: "<your-app-id>",
+            };
+            const app = new Realm.App(config);
+
+            const state = {}
+        </script>
+</head>
+<body>
+<div>
+  <input type="email" name="login-email" placeholder="Username" />
+  <input type="password" name="login-password" placeholder="Password" />
+  <button onclick="doLogin()">Login</button>
+  <span id="your-user-id"></span>
+</div>
+<div>
+  <input type="text" name="notification-description" placeholder="Notification" />
+  <button onclick="doSendNotification()">Notify</button>
+</div>
+<div>
+  <h1>List of Tasks</h1>
+  <button onclick="listAllTasks()">Refresh</button>
+  <table style="width: 60%; margin: auto;">
+    <thead>
+    <tr>
+      <th>Task Id</th>
+      <th>Owner Id</th>
+      <th>Description</th>
+      <th>Status</th>
+      <th>Transfer To</th>
+    </tr>
+    </thead>
+    <tbody id="list-of-tasks">
+
+    </tbody>
+  </table>
+</div>
+</body>
+<script>
+        async function doLogin() {
+            const email = document.querySelector("[name=login-email]").value
+            const password = document.querySelector("[name=login-password]").value
+
+            const credentials = Realm.Credentials.emailPassword(email, password);
+            try {
+                const user = await app.logIn(credentials);
+                await user.refreshCustomData();
+
+                state.mongo = app.currentUser.mongoClient("mongodb-atlas");
+                state.itemsColl = state.mongo.db("androidapp").collection("TodoListItem");
+
+                document.getElementById('your-user-id').innerHTML = `Your user id: <b>${user.id}</b>`;
+            } catch (ex) {
+                console.error(ex)
+            }
+
+            await listAllTasks()
+        }
+
+        async function doSendNotification() {
+            const text = document.querySelector("[name=notification-description]").value
+            try {
+                await app.currentUser.functions.notifyTo({ description: text, ownerId: app.currentUser.id })
+            } catch (ex) {
+                console.error(ex)
+            }
+        }
+
+        async function doTransferTaskTo({ taskId, userId }) {
+            try {
+                await app.currentUser.functions.transferTo({ taskId, userId })
+                await app.currentUser.functions.notifyTo({ description: "Se te ha asignado una nueva tarea.", ownerId: userId })
+            } catch (ex) {
+                console.error(ex)
+            }
+        }
+
+        function column(value) {
+            const cl = document.createElement('td')
+            cl.innerText = value
+            return cl
+        }
+
+        async function listAllTasks() {
+            const domList = document.getElementById('list-of-tasks')
+            domList.innerHTML = ""
+
+            const items = await state.itemsColl.find()
+            items.forEach(element => {
+                const tr = document.createElement('tr');
+                tr.appendChild(column(element._id.toString()))
+                tr.appendChild(column(element.ownerId))
+                tr.appendChild(column(element.description))
+                tr.appendChild(column(element.statusName))
+
+                const td = document.createElement('td')
+                const inputOfReceiver = document.createElement('input')
+                inputOfReceiver.type = 'text'
+                inputOfReceiver.placeholder = "User Id"
+                
+                const buttonForSubmit = document.createElement('button')
+                buttonForSubmit.innerHTML = "Transfer"
+                buttonForSubmit.onclick = async () => {
+                    await doTransferTaskTo({ taskId: element._id.toString(), userId: inputOfReceiver.value })
+                    await listAllTasks()
+                }
+
+                tr.appendChild(td)
+                td.appendChild(inputOfReceiver)
+                td.appendChild(buttonForSubmit)
+
+                domList.appendChild(tr)
+            });
+        }
+    </script>
+</html>

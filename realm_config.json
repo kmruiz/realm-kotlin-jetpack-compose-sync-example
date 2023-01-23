@@ -1,0 +1,7 @@
+{
+    "config_version": 20210101,
+    "app_id": "examplesync-hocmr",
+    "name": "ExampleSync",
+    "location": "IE",
+    "deployment_model": "LOCAL"
+}

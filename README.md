@@ -43,13 +43,12 @@ pretty simple but showcases a few functionalities from Realm.
 | ![Choose Region](doc/pictures/atlas-create-cluster-step-0.png) | ![Change Name](doc/pictures/atlas-create-cluster-step-1.png) |
 
 3. Also, create a new administrator user. Follow the steps in the screen.
-4. 
-5. Go to Access Manager, Project Access, and API Keys.
+4. Go to Access Manager, Project Access, and API Keys.
 ![Create API Key](doc/pictures/create-api-key.png)
 
-6. Remember to add **your own public IP** to the Access List. Do not use 0.0.0.0. Store the public key and the private key.
+5. Remember to add **your own public IP** to the Access List. Do not use 0.0.0.0. Store the public key and the private key.
 
-7. Login with your Realm cli:
+6. Login with your Realm cli:
 ```sh
 realm-cli login --api-key "$PUBLIC_API_KEY" --private-api-key "$PRIVATE_API_KEY" --yes
 ```
